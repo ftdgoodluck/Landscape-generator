@@ -28,11 +28,10 @@ public class FieldGenerator : MonoBehaviour
         fieldMesh.Clear();
         //GenerateHexMap();
         GenerateRandomHexMap();
-        Debug.Log(hexMap.Count);
         GenerateInitialPoints();
         UpdateHeights();
         
-        //NormalizeEdgesHeights();
+        NormalizeEdgesHeights();
         NormalizeHeights();
         PopulateMeshVertices();
         GenerateTriangles();
@@ -156,21 +155,9 @@ public class FieldGenerator : MonoBehaviour
                         newHeight = 0f;
                     else
                     {
-                        //var b = (float)d / Metrics.hexSize;
-                        //var b = Vector3.Distance(hexCenter.position, n.position) / (hexSize * triangleSize);
-                        //var dist = (float)n.DiscreteDistance(hexCenter) / Metrics.hexSize;
-                        //var pow = hex.hexType switch
-                        //{
-                        //    HexType.plain => 0f,
-                        //    HexType.hill => 5f,
-                        //    HexType.rock => 1f,
-                        //    _ => throw new ArgumentException("wrong hex type")
-                        //};
-                        ////newHeight = Mathf.Lerp(hexCenter.position.y, 0, Mathf.Pow(b, pow));
-                        ///
                         newHeight = hex.hexType switch
                         {
-                            HexType.plain => 1f,
+                            HexType.plain => 0f,
                             HexType.hill => HillHeight(hexCenter, n),
                             HexType.rock => RockHeight(hexCenter, n),
                             HexType.swamp => SwampHeight(hexCenter, n),
@@ -318,7 +305,7 @@ public struct HexMapElement
 
 public static class Metrics
 {
-    public const int hexSize = 10;
+    public const int hexSize = 6;
 }
 
 public class Vertice
