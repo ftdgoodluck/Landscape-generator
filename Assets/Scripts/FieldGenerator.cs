@@ -32,7 +32,7 @@ public class FieldGenerator : MonoBehaviour
         
         //NormalizeEdgesHeights();
         //NormalizeHeights();
-        //PopulateMeshVertices();
+        PopulateMeshVertices();
         GenerateTriangles();
         fieldMesh.Apply();
     }
