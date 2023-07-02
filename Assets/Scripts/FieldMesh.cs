@@ -13,6 +13,7 @@ public class FieldMesh : MonoBehaviour
     [NonSerialized] private List<Vector3> _vertices;
     [NonSerialized] private List<int> _triangles;
     [NonSerialized] private List<Color> _colors;
+    [NonSerialized] private List<Vector2> _uvs;
 
     private void Awake()
     {
@@ -20,6 +21,7 @@ public class FieldMesh : MonoBehaviour
         _fieldMesh.name = "Field Mesh";
         _vertices = new List<Vector3>();
         _triangles = new List<int>();
+        _uvs = new List<Vector2>();
     }
 
     public void Clear()
@@ -27,12 +29,14 @@ public class FieldMesh : MonoBehaviour
         _fieldMesh.Clear();
         _vertices.Clear();
         _triangles.Clear();
+        _uvs.Clear();
     }
 
     public void Apply()
     {
         _fieldMesh.SetVertices(_vertices);
         _fieldMesh.SetTriangles(_triangles, 0);
+        _fieldMesh.SetUVs(0, _uvs);
         _fieldMesh.RecalculateNormals();
     }
 
@@ -46,6 +50,11 @@ public class FieldMesh : MonoBehaviour
         _triangles.Add(point1);
         _triangles.Add(point2);
         _triangles.Add(point3);
+    }
+
+    public void AddUVs(List<Vector2> uvs)
+    {
+        _uvs = uvs;
     }
 
 

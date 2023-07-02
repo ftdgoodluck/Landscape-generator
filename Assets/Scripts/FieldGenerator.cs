@@ -20,6 +20,8 @@ public class FieldGenerator : MonoBehaviour
     public FieldMesh fieldMesh;
     private List<HexMapElement> hexMap = new List<HexMapElement>();
     private List<Vertice> vertices = new List<Vertice>();
+    private List<Vector2> uvs = new List<Vector2>();
+
 
     private void Start()
     {
@@ -31,9 +33,10 @@ public class FieldGenerator : MonoBehaviour
         UpdateHeights();
         
         //NormalizeEdgesHeights();
-        //NormalizeHeights();
+        NormalizeHeights();
         PopulateMeshVertices();
         GenerateTriangles();
+        AddUVs();
         fieldMesh.Apply();
     }
 
@@ -49,6 +52,7 @@ public class FieldGenerator : MonoBehaviour
                 position.z = z * triangleSize * 0.86602540378f;
                 position.y = 0f;
                 vertices.Add(new Vertice(position, x, z));
+                uvs.Add(new Vector2((float)x / HorizontalPointsCount, (float)z / VerticalPointsCount));
                 //fieldMesh.AddVertice(position);
                 //i++;
             }
@@ -61,6 +65,11 @@ public class FieldGenerator : MonoBehaviour
         {
             fieldMesh.AddVertice(v.position);
         }
+    }
+
+    private void AddUVs()
+    {
+        fieldMesh.AddUVs(uvs);
     }
 
     private void GenerateRandomHexMap()
@@ -265,6 +274,8 @@ public class FieldGenerator : MonoBehaviour
         {
             for (int x = 0; x < HorizontalPointsCount - 1; x++)
             {
+
+
                 fieldMesh.AddTriangle(
                     z * 2 * HorizontalPointsCount + x,
                     z * 2 * HorizontalPointsCount + x + HorizontalPointsCount,
