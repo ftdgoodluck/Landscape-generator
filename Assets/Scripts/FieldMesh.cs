@@ -9,11 +9,22 @@ public class FieldMesh : MonoBehaviour
 
     private Mesh _fieldMesh;
     private MeshCollider _meshCollider;
+    private MeshFilter _filter;
 
     [NonSerialized] private List<Vector3> _vertices;
     [NonSerialized] private List<int> _triangles;
     [NonSerialized] private List<Color> _colors;
     [NonSerialized] private List<Vector2> _uvs;
+
+    public MeshFilter Filter
+    {
+        get {
+            if (_filter == null) {
+                _filter = GetComponent<MeshFilter>();
+            }
+            return _filter;
+        }
+    }
 
     private void Awake()
     {
@@ -38,6 +49,28 @@ public class FieldMesh : MonoBehaviour
         _fieldMesh.SetTriangles(_triangles, 0);
         _fieldMesh.SetUVs(0, _uvs);
         _fieldMesh.RecalculateNormals();
+    }
+
+    public Mesh ApplyNormalNoise(Mesh mesh)
+    {
+
+        var vertices = mesh.vertices;
+        var normals = mesh.normals;
+        for (int i = 0, n = mesh.vertexCount; i < n; i++)
+        {
+            vertices[i] = vertices[i] + normals[i] * UnityEngine.Random.value * 0.55f;
+        }
+        mesh.vertices = vertices;
+
+        return mesh;
+    }
+
+    public void Smooth()
+    {
+        Filter.mesh = MeshSmoothing.HCFilter(Filter.mesh, 5, 0.13f, 0.2f);
+        //Debug.Log("aaa");
+        //_fieldMesh = MeshSmoothing.LaplacianFilter(_fieldMesh, 10);
+        //_fieldMesh.RecalculateNormals();
     }
 
     public void AddVertice(Vector3 point)

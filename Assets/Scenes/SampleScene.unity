@@ -168,12 +168,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 722acae56fc6c4a07a2cada9ec4693bb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  VerticalPointsCount: 100
-  HorizontalPointsCount: 100
+  VerticalPointsCount: 101
+  HorizontalPointsCount: 101
   triangleSize: 0.2
   hillHeight: 0.5
-  rockHeight: 1.5
-  swampHeight: -0.2
+  rockHeight: 2
+  swampHeight: -0.5
   step: 0.1
   fieldMesh: {fileID: 1085089555}
 --- !u!1 &705507993

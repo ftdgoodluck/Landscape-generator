@@ -21,6 +21,7 @@ public class FieldGenerator : MonoBehaviour
     private List<HexMapElement> hexMap = new List<HexMapElement>();
     private List<Vertice> vertices = new List<Vertice>();
     private List<Vector2> uvs = new List<Vector2>();
+    private Vertice[,] verticesArray;
 
 
     private void Start()
@@ -31,17 +32,20 @@ public class FieldGenerator : MonoBehaviour
         GenerateInitialPoints();
         UpdateHeights();
         
-        NormalizeEdgesHeights();
-        NormalizeHeights();
+        //NormalizeEdgesHeights();
+        //NormalizeHeights();
         PopulateMeshVertices();
         GenerateTriangles();
         AddUVs();
         fieldMesh.Apply();
+        fieldMesh.ApplyNormalNoise(fieldMesh.Filter.mesh);
+        fieldMesh.Smooth();
     }
 
     private void GenerateInitialPoints()
     {
         //int i = 0;
+        verticesArray = new Vertice[HorizontalPointsCount, VerticalPointsCount];
         for (int z = 0; z < VerticalPointsCount; z++)
         {
             for (int x = 0; x < HorizontalPointsCount; x++)
@@ -50,7 +54,9 @@ public class FieldGenerator : MonoBehaviour
                 position.x = z % 2 == 0 ? x * triangleSize : x * triangleSize + triangleSize / 2;
                 position.z = z * triangleSize * 0.86602540378f;
                 position.y = 0f;
-                vertices.Add(new Vertice(position, x, z));
+                Vertice v = new Vertice(position, x, z);
+                vertices.Add(v);
+                verticesArray[x, z] = v;
                 uvs.Add(new Vector2((float)x / HorizontalPointsCount, (float)z / VerticalPointsCount));
                 //fieldMesh.AddVertice(position);
                 //i++;
@@ -150,7 +156,7 @@ public class FieldGenerator : MonoBehaviour
                 var neighbours = vertices.Where(v => v.DiscreteDistance(hexCenter) == d);
                 foreach (var n in neighbours)
                 {
-                    float newHeight;
+                    float newHeight = 0f;
                     if (hexCenter.position.y == 0f)
                         newHeight = 0f;
                     else
@@ -223,18 +229,44 @@ public class FieldGenerator : MonoBehaviour
 
     private void NormalizeHeights()
     {
-        foreach (Vertice v in vertices)
+        for (int z = 0; z < VerticalPointsCount; z++)
         {
-            var chance = UnityEngine.Random.Range(0f, 1f);
-            if (chance > 0.7f)
-                continue;
-            else
+            for (int x = 0; x < HorizontalPointsCount; x++)
             {
-                var averageNeighboursHeight = vertices.Where(e => e.DiscreteDistance(v) == 1).Select(e => e.position.y).Average();
-                v.position.y = averageNeighboursHeight;
+                var vertice = verticesArray[x, z];
+                var neighbours = new List<Vertice>();
+                neighbours.Add(verticesArray[x - 1 < 0 ? 0 : 1, z]);
+                neighbours.Add(verticesArray[x + 1 > HorizontalPointsCount - 1 ? x : x + 1, z]);
+
+                neighbours.Add(verticesArray[x - 1 + z % 2 < 0 ? 0 : x - 1 + z % 2, z + 1 > VerticalPointsCount - 1 ? z : z + 1]);
+                neighbours.Add(verticesArray[x + z % 2 > HorizontalPointsCount -1 ? HorizontalPointsCount - 1 : x + z % 2, z + 1 > VerticalPointsCount - 1 ? z : z + 1]);
+                neighbours.Add(verticesArray[x - 1 + z % 2 < 0 ? 0 : x - 1 + z % 2, z - 1 < 0 ? 0 : z - 1]);
+                neighbours.Add(verticesArray[x + z % 2 > HorizontalPointsCount - 1 ? HorizontalPointsCount - 1 : x + z % 2, z - 1 < 0 ? 0 : z - 1]);
+                var averageHeight = neighbours.Select(e => e.position.y).Average();
+                vertice.position.y = averageHeight;
+            }
         }
     }
-    }
+
+    //private void updateEdgeHeights()
+    //{
+    //    var edgetable = new Dictionary<Vertice, HashSet<HexType>>();
+    //    var hexCenters = vertices.Where(v => v.IsHexCenter());
+    //    foreach (var hexCenter in hexCenters)
+    //    {
+    //        var hexCoords = hexCenter.ToHexCoordinates();
+    //        var edgeVertices = vertices.Where(v => v.DiscreteDistance(hexCenter) == hexSize);
+    //        foreach (Vertice edgeVertice in edgeVertices)
+    //        {
+    //            if (!edgetable.ContainsKey(edgeVertice))
+    //            {
+    //                var type = hexMap.FirstOrDefault(e => e.X == hexCoords.Item1 && e.Z == hexCoords.Item2).hexType;
+    //                edgetable.Add(edgeVertice, new type);
+    //            }
+    //        }
+    //    }
+        
+    //}
 
     private void NormalizeEdgesHeights()
     {
@@ -305,7 +337,7 @@ public struct HexMapElement
 
 public static class Metrics
 {
-    public const int hexSize = 6;
+    public const int hexSize = 10;
 }
 
 public class Vertice
