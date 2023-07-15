@@ -200,6 +200,10 @@ public class FieldGenerator : MonoBehaviour
             return Mathf.Lerp(0.2f * h, 0, relativeDistance);
     }
 
+
+
+
+
     private float HillHeight(Vertice hexCenter, Vertice target)
     {
         Vector2 start, end;
