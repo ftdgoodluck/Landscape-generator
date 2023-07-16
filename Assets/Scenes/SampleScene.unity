@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 705507994}
-  m_IndirectSpecularColor: {r: 0.18028326, g: 0.22571333, b: 0.30692202, a: 1}
+  m_IndirectSpecularColor: {r: 0.18028378, g: 0.22571412, b: 0.30692285, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -168,12 +168,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 722acae56fc6c4a07a2cada9ec4693bb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  VerticalPointsCount: 101
-  HorizontalPointsCount: 101
+  VerticalPointsCount: 100
+  HorizontalPointsCount: 100
   triangleSize: 0.2
   hillHeight: 0.5
-  rockHeight: 2
-  swampHeight: -0.5
+  rockHeight: 1.5
+  swampHeight: -0.2
   step: 0.1
   fieldMesh: {fileID: 1085089555}
 --- !u!1 &705507993
@@ -428,7 +428,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 438b376012fbb4c71ba0e7474e9dfe71, type: 2}
+  - {fileID: 2100000, guid: e00fef34523af504bb0b18a39d21c589, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0

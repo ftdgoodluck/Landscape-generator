@@ -1,11 +1,11 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using System.Linq;
 using System;
+using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
 
 public class FieldGenerator : MonoBehaviour
 {
+
     public int VerticalPointsCount = 100;
     public int HorizontalPointsCount = 100;
 
@@ -16,12 +16,17 @@ public class FieldGenerator : MonoBehaviour
     public float rockHeight = 1.0f;
     public float swampHeight = -0.2f;
     public float step = 0.1f;
+    static Color color1 = new Color(1f, 0f, 0f);
+    static Color color2 = new Color(0f, 1f, 0f);
+    static Color color3 = new Color(0f, 0f, 1f);
 
     public FieldMesh fieldMesh;
     private List<HexMapElement> hexMap = new List<HexMapElement>();
     private List<Vertice> vertices = new List<Vertice>();
     private List<Vector2> uvs = new List<Vector2>();
-    private Vertice[,] verticesArray;
+    private List<Vector3> texturelist = new List<Vector3>();
+    private Vector3 texturevector = new Vector3();
+
 
 
     private void Start()
@@ -30,22 +35,21 @@ public class FieldGenerator : MonoBehaviour
         //GenerateHexMap();
         GenerateRandomHexMap();
         GenerateInitialPoints();
-        UpdateHeights();
-        
-        //NormalizeEdgesHeights();
-        //NormalizeHeights();
-        PopulateMeshVertices();
-        GenerateTriangles();
         AddUVs();
+        UpdateHeights();
+
+        NormalizeEdgesHeights();
+        NormalizeHeights();
+        PopulateMeshVertices();
+        Addtextures();
+        GenerateTriangles();
+
         fieldMesh.Apply();
-        fieldMesh.ApplyNormalNoise(fieldMesh.Filter.mesh);
-        fieldMesh.Smooth();
     }
 
     private void GenerateInitialPoints()
     {
-        //int i = 0;
-        verticesArray = new Vertice[HorizontalPointsCount, VerticalPointsCount];
+        int i = 0;
         for (int z = 0; z < VerticalPointsCount; z++)
         {
             for (int x = 0; x < HorizontalPointsCount; x++)
@@ -54,12 +58,19 @@ public class FieldGenerator : MonoBehaviour
                 position.x = z % 2 == 0 ? x * triangleSize : x * triangleSize + triangleSize / 2;
                 position.z = z * triangleSize * 0.86602540378f;
                 position.y = 0f;
-                Vertice v = new Vertice(position, x, z);
-                vertices.Add(v);
-                verticesArray[x, z] = v;
+                vertices.Add(new Vertice(position, x, z));
+                texturelist.Add(new Vector3(4, 4, 4));
+
+                fieldMesh.Addcolor(color1);
+                //Idk what it doing, but it usefull
+
+
+
+
                 uvs.Add(new Vector2((float)x / HorizontalPointsCount, (float)z / VerticalPointsCount));
                 //fieldMesh.AddVertice(position);
-                //i++;
+                i++;
+
             }
         }
     }
@@ -70,6 +81,11 @@ public class FieldGenerator : MonoBehaviour
         {
             fieldMesh.AddVertice(v.position);
         }
+    }
+    private void Addtextures()
+    {
+        foreach (Vector3 text in texturelist)
+            fieldMesh.Addtexture(text);
     }
 
     private void AddUVs()
@@ -85,52 +101,53 @@ public class FieldGenerator : MonoBehaviour
         {
             for (int x = 0; x < hc; x++)
             {
-                var hextype = (HexType)UnityEngine.Random.Range(0, 4);
-                hexMap.Add(new HexMapElement(x, z, hextype));
+                int randomnumber = UnityEngine.Random.Range(0, 4);
+                var hextype = (HexType)(randomnumber);
+                hexMap.Add(new HexMapElement(x, z, hextype, randomnumber));
 
             }
         }
     }
 
-    private void GenerateHexMap()
-    {
-        hexMap.Add(new HexMapElement(0, 0, HexType.hill));
-        hexMap.Add(new HexMapElement(0, 1, HexType.hill));
-        //hexMap.Add(new HexMapElement(0, 2, HexType.plain));
-        //hexMap.Add(new HexMapElement(0, 3, HexType.plain));
-        hexMap.Add(new HexMapElement(0, 4, HexType.hill));
-        //hexMap.Add(new HexMapElement(0, 5, HexType.plain));
-        hexMap.Add(new HexMapElement(1, 0, HexType.hill));
-        hexMap.Add(new HexMapElement(1, 1, HexType.hill));
-        //hexMap.Add(new HexMapElement(1, 2, HexType.rock));
-        hexMap.Add(new HexMapElement(1, 3, HexType.rock));
-        hexMap.Add(new HexMapElement(1, 4, HexType.rock));
-        //hexMap.Add(new HexMapElement(1, 5, HexType.rock));
-        //hexMap.Add(new HexMapElement(2, 0, HexType.plain));
-        //hexMap.Add(new HexMapElement(2, 1, HexType.plain));
-        //hexMap.Add(new HexMapElement(2, 2, HexType.plain));
-        //hexMap.Add(new HexMapElement(2, 3, HexType.rock));
-        hexMap.Add(new HexMapElement(2, 4, HexType.swamp));
-        //hexMap.Add(new HexMapElement(2, 5, HexType.plain));
-        //hexMap.Add(new HexMapElement(3, 0, HexType.plain));
-        //hexMap.Add(new HexMapElement(3, 1, HexType.plain));
-        //hexMap.Add(new HexMapElement(3, 2, HexType.plain));
-        hexMap.Add(new HexMapElement(3, 3, HexType.swamp));
-        //hexMap.Add(new HexMapElement(3, 4, HexType.plain));
-        //hexMap.Add(new HexMapElement(3, 5, HexType.plain));
-        //hexMap.Add(new HexMapElement(4, 0, HexType.plain));
-        hexMap.Add(new HexMapElement(4, 1, HexType.hill));
-        //hexMap.Add(new HexMapElement(4, 2, HexType.plain));
-        //hexMap.Add(new HexMapElement(4, 3, HexType.plain));
-        //hexMap.Add(new HexMapElement(4, 4, HexType.plain));
-        //hexMap.Add(new HexMapElement(4, 5, HexType.plain));
-        //hexMap.Add(new HexMapElement(5, 0, HexType.plain));
-        //hexMap.Add(new HexMapElement(5, 1, HexType.rock));
-        //hexMap.Add(new HexMapElement(5, 2, HexType.hill));
-        //hexMap.Add(new HexMapElement(5, 3, HexType.plain));
-        //hexMap.Add(new HexMapElement(5, 4, HexType.plain));
-        //hexMap.Add(new HexMapElement(5, 5, HexType.plain));
-    }
+    //private void GenerateHexMap()
+    //{
+    //    hexMap.Add(new HexMapElement(0, 0, HexType.hill));
+    //    hexMap.Add(new HexMapElement(0, 1, HexType.hill));
+    //    //hexMap.Add(new HexMapElement(0, 2, HexType.plain));
+    //    //hexMap.Add(new HexMapElement(0, 3, HexType.plain));
+    //    hexMap.Add(new HexMapElement(0, 4, HexType.hill));
+    //    //hexMap.Add(new HexMapElement(0, 5, HexType.plain));
+    //    hexMap.Add(new HexMapElement(1, 0, HexType.hill));
+    //    hexMap.Add(new HexMapElement(1, 1, HexType.hill));
+    //    //hexMap.Add(new HexMapElement(1, 2, HexType.rock));
+    //    hexMap.Add(new HexMapElement(1, 3, HexType.rock));
+    //    hexMap.Add(new HexMapElement(1, 4, HexType.rock));
+    //    //hexMap.Add(new HexMapElement(1, 5, HexType.rock));
+    //    //hexMap.Add(new HexMapElement(2, 0, HexType.plain));
+    //    //hexMap.Add(new HexMapElement(2, 1, HexType.plain));
+    //    //hexMap.Add(new HexMapElement(2, 2, HexType.plain));
+    //    //hexMap.Add(new HexMapElement(2, 3, HexType.rock));
+    //    hexMap.Add(new HexMapElement(2, 4, HexType.swamp));
+    //    //hexMap.Add(new HexMapElement(2, 5, HexType.plain));
+    //    //hexMap.Add(new HexMapElement(3, 0, HexType.plain));
+    //    //hexMap.Add(new HexMapElement(3, 1, HexType.plain));
+    //    //hexMap.Add(new HexMapElement(3, 2, HexType.plain));
+    //    hexMap.Add(new HexMapElement(3, 3, HexType.swamp));
+    //    //hexMap.Add(new HexMapElement(3, 4, HexType.plain));
+    //    //hexMap.Add(new HexMapElement(3, 5, HexType.plain));
+    //    //hexMap.Add(new HexMapElement(4, 0, HexType.plain));
+    //    hexMap.Add(new HexMapElement(4, 1, HexType.hill));
+    //    //hexMap.Add(new HexMapElement(4, 2, HexType.plain));
+    //    //hexMap.Add(new HexMapElement(4, 3, HexType.plain));
+    //    //hexMap.Add(new HexMapElement(4, 4, HexType.plain));
+    //    //hexMap.Add(new HexMapElement(4, 5, HexType.plain));
+    //    //hexMap.Add(new HexMapElement(5, 0, HexType.plain));
+    //    //hexMap.Add(new HexMapElement(5, 1, HexType.rock));
+    //    //hexMap.Add(new HexMapElement(5, 2, HexType.hill));
+    //    //hexMap.Add(new HexMapElement(5, 3, HexType.plain));
+    //    //hexMap.Add(new HexMapElement(5, 4, HexType.plain));
+    //    //hexMap.Add(new HexMapElement(5, 5, HexType.plain));
+    //}
 
 
     private void UpdateHeights()
@@ -141,7 +158,9 @@ public class FieldGenerator : MonoBehaviour
             var hexCoords = hexCenter.ToHexCoordinates();
             //Debug.Log("tX: "+ hexCenter.tX.ToString() + " tZ: " + hexCenter.tZ.ToString() + "/ hexX: " + hexCoords.Item1.ToString() + " hexZ: " + hexCoords.Item2.ToString());
             var hex = hexMap.FirstOrDefault(e => e.X == hexCoords.Item1 && e.Z == hexCoords.Item2);
+
             var height = hex.hexType switch
+
             {
                 HexType.plain => 0f,
                 HexType.hill => hillHeight,
@@ -150,13 +169,22 @@ public class FieldGenerator : MonoBehaviour
                 _ => throw new ArgumentException("wrong hex type")
             };
             vertices.First(v => v.tX == hexCenter.tX && v.tZ == hexCenter.tZ).position.y = height;
+
+            int typeNumber = hex.textureType;
+            int textureindex = vertices.IndexOf(hexCenter);
+            texturevector.x = texturevector.z = texturevector.y = typeNumber;
+            texturelist[textureindex] = texturevector;
+
             //Debug.Log(hexCenter.ToString());
+
             for (int d = 1; d < Metrics.hexSize; d++)
             {
+
                 var neighbours = vertices.Where(v => v.DiscreteDistance(hexCenter) == d);
                 foreach (var n in neighbours)
                 {
-                    float newHeight = 0f;
+
+                    float newHeight;
                     if (hexCenter.position.y == 0f)
                         newHeight = 0f;
                     else
@@ -169,10 +197,37 @@ public class FieldGenerator : MonoBehaviour
                             HexType.swamp => SwampHeight(hexCenter, n),
                             _ => throw new ArgumentException("wrong hex type")
                         };
+
+
                     }
                     n.position.y = newHeight;
+
+
+                    typeNumber = hex.textureType;
+                    textureindex = vertices.IndexOf(n);
+                    texturevector.x = texturevector.z = texturevector.y = typeNumber;
+                    texturelist[textureindex] = texturevector;
+
+
+
+
                 }
+                
+
             }
+            var neighbours2 = vertices.Where(v => v.DiscreteDistance(hexCenter) == 6);
+            foreach (var n in neighbours2)
+            {
+
+                typeNumber = hex.textureType;
+                textureindex = vertices.IndexOf(n);  
+                texturevector.x = texturevector.z = texturevector.y = typeNumber;   
+                texturelist[textureindex] = texturevector;
+
+            }
+            //for edge vertice
+
+
         }
 
 
@@ -187,7 +242,7 @@ public class FieldGenerator : MonoBehaviour
         end.x = target.position.x;
         end.y = target.position.z;
         var relativeDistance = Vector2.Distance(start, end) / (hexSize * triangleSize);
-        Debug.Log(relativeDistance.ToString());
+        //Debug.Log(relativeDistance.ToString());
         if (relativeDistance < 0.2f)
             return Mathf.Lerp(h, 0.9f * h, relativeDistance * 5);
         else if (relativeDistance < 0.4f)
@@ -199,10 +254,6 @@ public class FieldGenerator : MonoBehaviour
         else
             return Mathf.Lerp(0.2f * h, 0, relativeDistance);
     }
-
-
-
-
 
     private float HillHeight(Vertice hexCenter, Vertice target)
     {
@@ -233,49 +284,23 @@ public class FieldGenerator : MonoBehaviour
 
     private void NormalizeHeights()
     {
-        for (int z = 0; z < VerticalPointsCount; z++)
+        foreach (Vertice v in vertices)
         {
-            for (int x = 0; x < HorizontalPointsCount; x++)
+            var chance = UnityEngine.Random.Range(0f, 1f);
+            if (chance > 0.7f)
+                continue;
+            else
             {
-                var vertice = verticesArray[x, z];
-                var neighbours = new List<Vertice>();
-                neighbours.Add(verticesArray[x - 1 < 0 ? 0 : 1, z]);
-                neighbours.Add(verticesArray[x + 1 > HorizontalPointsCount - 1 ? x : x + 1, z]);
-
-                neighbours.Add(verticesArray[x - 1 + z % 2 < 0 ? 0 : x - 1 + z % 2, z + 1 > VerticalPointsCount - 1 ? z : z + 1]);
-                neighbours.Add(verticesArray[x + z % 2 > HorizontalPointsCount -1 ? HorizontalPointsCount - 1 : x + z % 2, z + 1 > VerticalPointsCount - 1 ? z : z + 1]);
-                neighbours.Add(verticesArray[x - 1 + z % 2 < 0 ? 0 : x - 1 + z % 2, z - 1 < 0 ? 0 : z - 1]);
-                neighbours.Add(verticesArray[x + z % 2 > HorizontalPointsCount - 1 ? HorizontalPointsCount - 1 : x + z % 2, z - 1 < 0 ? 0 : z - 1]);
-                var averageHeight = neighbours.Select(e => e.position.y).Average();
-                vertice.position.y = averageHeight;
+                var averageNeighboursHeight = vertices.Where(e => e.DiscreteDistance(v) == 1).Select(e => e.position.y).Average();
+                v.position.y = averageNeighboursHeight;
             }
         }
     }
 
-    //private void updateEdgeHeights()
-    //{
-    //    var edgetable = new Dictionary<Vertice, HashSet<HexType>>();
-    //    var hexCenters = vertices.Where(v => v.IsHexCenter());
-    //    foreach (var hexCenter in hexCenters)
-    //    {
-    //        var hexCoords = hexCenter.ToHexCoordinates();
-    //        var edgeVertices = vertices.Where(v => v.DiscreteDistance(hexCenter) == hexSize);
-    //        foreach (Vertice edgeVertice in edgeVertices)
-    //        {
-    //            if (!edgetable.ContainsKey(edgeVertice))
-    //            {
-    //                var type = hexMap.FirstOrDefault(e => e.X == hexCoords.Item1 && e.Z == hexCoords.Item2).hexType;
-    //                edgetable.Add(edgeVertice, new type);
-    //            }
-    //        }
-    //    }
-        
-    //}
-
     private void NormalizeEdgesHeights()
     {
         var hexCenters = vertices.Where(v => v.IsHexCenter());
-        foreach(Vertice hexCenter in hexCenters)
+        foreach (Vertice hexCenter in hexCenters)
         {
             var edgeVertices = vertices.Where(v => v.DiscreteDistance(hexCenter) == hexSize);
             foreach (Vertice v in edgeVertices)
@@ -283,17 +308,16 @@ public class FieldGenerator : MonoBehaviour
                 var averageNeighboursHeight = vertices.Where(e => e.DiscreteDistance(v) == 1).Select(e => e.position.y).Average();
                 v.position.y = averageNeighboursHeight;
             }
-            
+
 
         }
-        
+
 
     }
 
-
     private void GenerateTriangles()
     {
-        for (int z = 0; z < (VerticalPointsCount - 1) / 2 ; z++)
+        for (int z = 0; z < (VerticalPointsCount - 1) / 2; z++)
         {
             for (int x = 0; x < HorizontalPointsCount - 1; x++)
             {
@@ -325,12 +349,15 @@ public struct HexMapElement
     public int X;
     public int Z;
     public HexType hexType;
+    public int textureType;
 
-    public HexMapElement(int x, int z, HexType type)
+    public HexMapElement(int x, int z, HexType type, int typeIndex)
     {
         X = x;
         Z = z;
         hexType = type;
+        textureType = typeIndex;
+
     }
 
     public override string ToString()
@@ -341,7 +368,7 @@ public struct HexMapElement
 
 public static class Metrics
 {
-    public const int hexSize = 10;
+    public const int hexSize = 6;
 }
 
 public class Vertice
@@ -355,7 +382,7 @@ public class Vertice
     public int tX => x - z / 2;
     public int tZ => z;
     public int tY => -tX - tZ;
-    
+
 
     public Vertice(Vector3 pos, int X, int Z)
     {
@@ -394,6 +421,8 @@ public class Vertice
         string res = "Vertice: x: " + x.ToString() + " z: " + z.ToString();
         return res;
     }
+
+
 
 }
 
