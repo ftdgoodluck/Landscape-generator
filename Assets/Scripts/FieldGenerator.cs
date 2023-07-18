@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.ExceptionServices;
 using UnityEngine;
 
 public class FieldGenerator : MonoBehaviour
@@ -61,7 +62,7 @@ public class FieldGenerator : MonoBehaviour
                 position.z = z * triangleSize * 0.86602540378f;
                 position.y = 0f;
                 vertices.Add(new Vertice(position, x, z));
-                //texturelist.Add(new Vector3(4, 4, 4));
+                texturelist.Add(new Vector3(4, 4, 4));
 
                 fieldMesh.Addcolor(colors[0]);
                
@@ -178,7 +179,7 @@ public class FieldGenerator : MonoBehaviour
             texturevector.x = texturevector.z = texturevector.y = typeNumber;
             texturelist[index] = texturevector;
             fieldMesh.Changecolor(index, colors[typeNumber]);
-         
+            //each color match correspond texture
 
             //Debug.Log(hexCenter.ToString());
 
@@ -234,7 +235,7 @@ public class FieldGenerator : MonoBehaviour
 
             }
             //for edge vertice
-
+           
 
         }
 
