@@ -16,9 +16,7 @@ public class FieldGenerator : MonoBehaviour
     public float rockHeight = 1.0f;
     public float swampHeight = -0.2f;
     public float step = 0.1f;
-    static Color color1 = new Color(1f, 0f, 0f);
-    static Color color2 = new Color(0f, 1f, 0f);
-    static Color color3 = new Color(0f, 0f, 1f);
+    
 
     public FieldMesh fieldMesh;
     private List<HexMapElement> hexMap = new List<HexMapElement>();
@@ -26,11 +24,15 @@ public class FieldGenerator : MonoBehaviour
     private List<Vector2> uvs = new List<Vector2>();
     private List<Vector3> texturelist = new List<Vector3>();
     private Vector3 texturevector = new Vector3();
-
-
+    private List<Color> colors = new List<Color>();
+    
 
     private void Start()
     {
+        colors.Add(Color.red);
+        colors.Add(Color.green);
+        colors.Add(Color.blue);
+        colors.Add(Color.black);
         fieldMesh.Clear();
         //GenerateHexMap();
         GenerateRandomHexMap();
@@ -59,10 +61,10 @@ public class FieldGenerator : MonoBehaviour
                 position.z = z * triangleSize * 0.86602540378f;
                 position.y = 0f;
                 vertices.Add(new Vertice(position, x, z));
-                texturelist.Add(new Vector3(4, 4, 4));
+                //texturelist.Add(new Vector3(4, 4, 4));
 
-                fieldMesh.Addcolor(color1);
-                //Idk what it doing, but it usefull
+                fieldMesh.Addcolor(colors[0]);
+               
 
 
 
@@ -104,6 +106,7 @@ public class FieldGenerator : MonoBehaviour
                 int randomnumber = UnityEngine.Random.Range(0, 4);
                 var hextype = (HexType)(randomnumber);
                 hexMap.Add(new HexMapElement(x, z, hextype, randomnumber));
+                
 
             }
         }
@@ -171,9 +174,11 @@ public class FieldGenerator : MonoBehaviour
             vertices.First(v => v.tX == hexCenter.tX && v.tZ == hexCenter.tZ).position.y = height;
 
             int typeNumber = hex.textureType;
-            int textureindex = vertices.IndexOf(hexCenter);
+            int index = vertices.IndexOf(hexCenter);
             texturevector.x = texturevector.z = texturevector.y = typeNumber;
-            texturelist[textureindex] = texturevector;
+            texturelist[index] = texturevector;
+            fieldMesh.Changecolor(index, colors[typeNumber]);
+         
 
             //Debug.Log(hexCenter.ToString());
 
@@ -204,9 +209,10 @@ public class FieldGenerator : MonoBehaviour
 
 
                     typeNumber = hex.textureType;
-                    textureindex = vertices.IndexOf(n);
+                    index = vertices.IndexOf(n);
                     texturevector.x = texturevector.z = texturevector.y = typeNumber;
-                    texturelist[textureindex] = texturevector;
+                    texturelist[index] = texturevector;
+                    fieldMesh.Changecolor(index, colors[typeNumber]);
 
 
 
@@ -220,9 +226,11 @@ public class FieldGenerator : MonoBehaviour
             {
 
                 typeNumber = hex.textureType;
-                textureindex = vertices.IndexOf(n);  
+                index = vertices.IndexOf(n);  
                 texturevector.x = texturevector.z = texturevector.y = typeNumber;   
-                texturelist[textureindex] = texturevector;
+                texturelist[index] = texturevector;
+                fieldMesh.Changecolor(index, colors[typeNumber]);
+
 
             }
             //for edge vertice

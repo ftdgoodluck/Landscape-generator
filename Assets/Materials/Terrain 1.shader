@@ -35,16 +35,19 @@
 			float3 uvw = float3(IN.worldPos.xz * 0.5, IN.terrain[index]);
 			float4 c = UNITY_SAMPLE_TEX2DARRAY(_MainTex, uvw);
 			
-			return c;
+			return c* IN.color[index];
 		}
 
 		void surf (Input IN, inout SurfaceOutputStandard o) {
-			fixed4 c = GetTerrainColor(IN, 0);
+			fixed4 c =
+				GetTerrainColor(IN, 0) +
+				GetTerrainColor(IN, 1) +
+				GetTerrainColor(IN, 2);
 	
 			o.Albedo = c.rgb;
 			o.Metallic = _Metallic;
 			o.Smoothness = _Glossiness;
-			//o.Alpha = c.a;
+			o.Alpha = c.a;
 		}
 		ENDCG
 	}

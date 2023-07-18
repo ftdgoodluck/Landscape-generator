@@ -47,9 +47,9 @@ public class FieldMesh : MonoBehaviour
     {
         _fieldMesh.SetVertices(_vertices);
         _fieldMesh.SetColors(colors);
-        _fieldMesh.SetUVs(0, terrainTypes);
+        _fieldMesh.SetUVs(0, _uvs);
         _fieldMesh.SetTriangles(_triangles, 0);
-        //_fieldMesh.SetUVs(0, _uvs);
+        //_fieldMesh.SetUVs(1, terrainTypes);
        
         
         _fieldMesh.RecalculateNormals();
