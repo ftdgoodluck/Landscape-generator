@@ -8,6 +8,7 @@ using Unity.VisualScripting;
 using UnityEditor.MemoryProfiler;
 using UnityEngine;
 using UnityEngine.UIElements;
+using static FieldGenerator;
 
 public class FieldGenerator : MonoBehaviour
 {
@@ -24,7 +25,10 @@ public class FieldGenerator : MonoBehaviour
     public float step = 0.1f;
     public int typequantity = 4;
     public int smoothlevel = 2;
-
+    
+    public int secondsmoothlevel = 2;
+    public int needsametostay=2;
+    public bool paintmeshtype= false;
     public FieldMesh fieldMesh;
     private List<HexMapElement> hexMap = new List<HexMapElement>();
     private List<Vertice> vertices = new List<Vertice>();
@@ -276,17 +280,56 @@ public class FieldGenerator : MonoBehaviour
    
     private void Paintmesh()
     {
-        foreach(Hex hex in hexlist)
-        {
-            Paintmesh(hex.center, hex.indextype);
-           foreach(Vertice vertice in hex.vertcies)
+        List<Vertice> verti = new List<Vertice>();
+
+        if (paintmeshtype == true) {
+            foreach (Vertice vert in vertices)
             {
-                Paintmesh(vertice, hex.indextype);
+                verti.Add(verticehex[vert].center);
+                if (verti.Contains(vert))
+                {
+                    Debug.Log(vert);
+                }
+
+                Paintmeshv2(vert, verticehex[vert].indextype);
+            }
+        }
+        else
+        {
+
+            foreach (Hex hex in hexlist)
+            {
+
+                Paintmeshv2(hex.center, hex.indextype);
+                foreach (Vertice vertice in hex.vertcies)
+                {
+                    if (verti.Contains(vertice))
+                    {
+                        Debug.Log(vertice);
+                    }
+                    verti.Add(vertice);
+                    Paintmeshv2(vertice, hex.indextype);
+
+                }
             }
         }
         
+
+
     }
-    private void Paintmesh(Vertice n, int typeNumber)
+    private void Paintmeshv1(Vertice n, int typeNumber)
+    {
+        int index = n.x + n.z * HorizontalPointsCount;
+        if (typeNumber <= 2)
+        {
+            fieldMesh.texturetypes2[index] = texturscodes[typeNumber];
+        }
+        else
+        {
+            fieldMesh.texturetypes3[index] = texturscodes[typeNumber - 3];
+        }
+    }
+    private void Paintmeshv2(Vertice n, int typeNumber)
     {
         int index = n.x + n.z * HorizontalPointsCount;
         
@@ -330,8 +373,10 @@ public class FieldGenerator : MonoBehaviour
             for (int i = 0; i < vertices.Count; i++)
             {
 
+                int a = 0;
+                Startoffor:
                 int connectTo = UnityEngine.Random.Range(0, connections[i].Connection.Count);
-                
+
                 if (verticehex.ContainsKey(vertices[connections[i].Connection[connectTo]]))
                 {
                     verticehex[vertices[i]] = verticehex[vertices[connections[i].Connection[connectTo]]];
@@ -344,15 +389,113 @@ public class FieldGenerator : MonoBehaviour
                     else verticehex.Add(vertices[i], verticehex[vertices[connections[i].Connection[connectTo]]]);
                     verticehex[vertices[connections[i].Connection[connectTo]]].vertcies.Add(vertices[i]);
                 }
-                       
-                
+                else if (a < 5)
+                {
+                    a++;
+                    goto Startoffor;
+                }
+
+
             }
         }
+        for(int loop=0; loop < secondsmoothlevel; loop++)
+        {
+            for (int i = 0; i < vertices.Count; i++)
+            {
 
+                List<HexType> hexlist = new List<HexType>();
+                Dictionary<HexType, int> coincidence = new Dictionary<HexType, int>();
+                for (int a = 0; a < connections[i].Connection.Count; a++)
+                {
+                    HexType hextype = verticehex[vertices[connections[i].Connection[a]]].type;
+                    if (!hexlist.Contains(hextype))
+                    {
+                        hexlist.Add(hextype);
+                        coincidence.Add(hextype, 1);
+                    }
+                    else coincidence[hextype]++;
+                }
+                foreach (HexType hex in coincidence.Keys)
+                {
+                    if (!coincidence.ContainsKey(verticehex[vertices[i]].type)|| coincidence[verticehex[vertices[i]].type] <= needsametostay)
+                    {
+                        HexType supremacytype=HexType.plain;
+                        int supremacyquantity = 0;
+                        foreach(HexType typ in coincidence.Keys)
+                        {
+                            if (coincidence[typ] > supremacyquantity)
+                            {
+                                supremacytype = typ;
+                                supremacyquantity = coincidence[typ];
+                            }
+                           
+                        }
+                        for (int a = 0; a < connections[i].Connection.Count; a++)
+                        {
+                            if (verticehex[vertices[connections[i].Connection[a]]].type == supremacytype)
+                            {
+                                verticehex[vertices[i]] = verticehex[vertices[connections[i].Connection[a]]];
+                                verticehex[vertices[i]].vertcies.Remove(vertices[i]);
+                                verticehex[vertices[connections[i].Connection[a]]].vertcies.Add(vertices[i]);
+                                break;
+                            }
+                        }
+
+                    }
+                }
+            }
         
+        }
     }
     private void Setheigh()
     {
+        //var hexCenters = vertices.Where(v => v.IsHexCenter());
+        //foreach (var hexCenter in hexCenters)
+        //{
+
+
+        //    var hexCoords = hexCenter.ToHexCoordinates();
+        //    var height = verticehex[hexCenter].type switch
+
+        //    {
+        //        HexType.plain => 0f,
+        //        HexType.hill => hillHeight,
+        //        HexType.rock => rockHeight,
+        //        HexType.swamp => swampHeight,
+        //        _ => throw new ArgumentException("wrong hex type")
+        //    };
+        //    vertices[hexCenter.x + hexCenter.z * HorizontalPointsCount].position.y = height;
+        //}
+        //foreach (Vertice vert in vertices)
+        //{
+        //    Hex hex = verticehex[vert];
+        //    if(vert != hex.center)
+        //    {
+        //        float newHeight;
+
+
+
+        //        newHeight = hex.type switch
+        //        {
+        //            HexType.plain => 0f,
+        //            HexType.hill => HillHeight(hex.center, vert),
+        //            HexType.rock => RockHeight(hex.center, vert),
+        //            HexType.swamp => SwampHeight(hex.center, vert),
+        //            _ => throw new ArgumentException("wrong hex type")
+        //        };
+
+
+
+        //        vertices[vert.x + vert.z * HorizontalPointsCount].position.y = newHeight;
+
+        //    }
+        //    else
+        //    {
+
+
+        //    }
+
+        //    }
         foreach (Hex hex in hexlist)
         {
             var height = hex.type switch
@@ -387,6 +530,7 @@ public class FieldGenerator : MonoBehaviour
 
             }
         }
+
     }
     private float RockHeight(Vertice hexCenter, Vertice target)
     {
