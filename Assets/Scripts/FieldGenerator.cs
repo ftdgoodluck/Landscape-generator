@@ -23,17 +23,17 @@ public class FieldGenerator : MonoBehaviour
     public float rockHeight = 1.0f;
     public float swampHeight = -0.2f;
     public float step = 0.1f;
-    public int typequantity = 4;
+    public int typequantity = 5;
+    public List<float> biomsweights = new List<float>();
     public int smoothlevel = 2;
     
     public int secondsmoothlevel = 2;
-    public int needsametostay=2;
-    public bool paintmeshtype= false;
+    public int needsametostay = 2;
     public FieldMesh fieldMesh;
     private List<HexMapElement> hexMap = new List<HexMapElement>();
     private List<Vertice> vertices = new List<Vertice>();
     private List<Vector2> uvs = new List<Vector2>();
-   
+
     private List<Color> colors = new List<Color>();
     private List<Vector3> texturscodes = new List<Vector3>();
     private Dictionary<Vertice, Hex> verticehex = new Dictionary<Vertice, Hex>();
@@ -42,6 +42,7 @@ public class FieldGenerator : MonoBehaviour
     private Dictionary<int, VertexConnection> connections;
     private void Start()
     {
+
         //colors.Add(Color.red);
         //colors.Add(Color.green);
         //colors.Add(Color.blue);
@@ -68,7 +69,29 @@ public class FieldGenerator : MonoBehaviour
         Paintmesh();
         PopulateMeshVertices();
         PopulateTriangles();
-        
+        foreach (Hex hex in hexlist)
+        {
+            foreach (Hex hex2 in hexlist)
+            {
+                if (hex != hex2)
+                {
+                    foreach (Vertice vertice in hex.vertcies)
+                    {
+                        foreach (Vertice vertice2 in hex2.vertcies)
+                        {
+                            if (vertice == vertice2)
+                            {
+                                Debug.Log(hex.center.position);
+                                Debug.Log(hex2.center.position);
+                                Debug.Log(vertice.position);
+                                Debug.Log(vertice2.position);
+                            }
+                        }
+                    }
+                }
+
+            }
+        }
 
 
         fieldMesh.Apply();
@@ -77,7 +100,7 @@ public class FieldGenerator : MonoBehaviour
     private void GenerateInitialPoints()
     {
         int i = 0;
-        for (int z = 0; z < VerticalPointsCount-1; z++)
+        for (int z = 0; z < VerticalPointsCount - 1; z++)
         {
             for (int x = 0; x < HorizontalPointsCount; x++)
             {
@@ -87,9 +110,9 @@ public class FieldGenerator : MonoBehaviour
                 position.z = z * triangleSize * 0.86602540378f;
                 position.y = 0f;
                 vertices.Add(new Vertice(position, x, z));
-                
 
-               
+
+
                 fieldMesh.texturetypes2.Add(new Vector3(0, 0, 0));
                 fieldMesh.texturetypes3.Add(new Vector3(0, 0, 0));
 
@@ -110,7 +133,7 @@ public class FieldGenerator : MonoBehaviour
             fieldMesh.AddVertice(v.position);
         }
     }
- 
+
     //private void AddUVs()
     //{
     //    fieldMesh.AddUVs(uvs);
@@ -125,11 +148,20 @@ public class FieldGenerator : MonoBehaviour
             for (int x = 0; x < hc; x++)
             {
                
-                int randomnumber = UnityEngine.Random.Range(0, typequantity);
                 
-                var hextype = (HexType)(randomnumber);
-                hexMap.Add(new HexMapElement(x, z, hextype, randomnumber));
+                float randomnumber = UnityEngine.Random.Range(0, biomsweights.Sum());
+                for (int i= 0; i < biomsweights.Count;i++)
+                {
+                    if (randomnumber < biomsweights.Take(i + 1).Sum())
+                    {
+                        var hextype = (HexType)(i);
+                        hexMap.Add(new HexMapElement(x, z, hextype, i));
+                    }
+                }
                 
+
+                
+
             }
         }
     }
@@ -177,12 +209,12 @@ public class FieldGenerator : MonoBehaviour
 
     private void UpdateHeights()
     {
-       
+
         var hexCenters = vertices.Where(v => v.IsHexCenter());
         foreach (var hexCenter in hexCenters)
         {
 
-           
+
 
             var hexCoords = hexCenter.ToHexCoordinates();
             //Debug.Log("tX: "+ hexCenter.tX.ToString() + " tZ: " + hexCenter.tZ.ToString() + "/ hexX: " + hexCoords.Item1.ToString() + " hexZ: " + hexCoords.Item2.ToString());
@@ -214,7 +246,7 @@ public class FieldGenerator : MonoBehaviour
                 var neighbours = vertices.Where(v => v.DiscreteDistance(hexCenter) == d);
                 foreach (var n in neighbours)
                 {
-                    
+
 
                     //float newHeight;
                     //if (hexCenter.position.y == 0f)
@@ -237,7 +269,7 @@ public class FieldGenerator : MonoBehaviour
 
                     verticehex.Add(n, hexhex);
                     hexhex.vertcies.Add(n);
-                    
+
 
                     //Paintmesh(n, hex.textureType);
 
@@ -245,7 +277,7 @@ public class FieldGenerator : MonoBehaviour
 
 
                 }
-                
+
 
             }
             //var neighbours2 = vertices.Where(v => v.DiscreteDistance(hexCenter) == 6);
@@ -255,8 +287,8 @@ public class FieldGenerator : MonoBehaviour
             //        verticehex.Add(n, hexhex);
             //        hexhex.vertcies.Add(n);
             //    }
-               
-                
+
+
             //}
             //for edge vertice
 
@@ -270,100 +302,93 @@ public class FieldGenerator : MonoBehaviour
             //}
 
             hexlist.Add(hexhex);
-            
+
 
         }
 
 
     }
 
-   
+
     private void Paintmesh()
     {
-        List<Vertice> verti = new List<Vertice>();
 
-        if (paintmeshtype == true) {
-            foreach (Vertice vert in vertices)
-            {
-                verti.Add(verticehex[vert].center);
-                if (verti.Contains(vert))
-                {
-                    Debug.Log(vert);
-                }
-
-                Paintmeshv2(vert, verticehex[vert].indextype);
-            }
-        }
-        else
+        foreach (Hex hex in hexlist)
         {
 
-            foreach (Hex hex in hexlist)
+            Paintmesh(hex.center, hex.typeindex);
+            foreach (Vertice vertice in hex.vertcies)
             {
+                if (vertice != hex.center)
+                    Paintmesh(vertice, hex.typeindex);
 
-                Paintmeshv2(hex.center, hex.indextype);
-                foreach (Vertice vertice in hex.vertcies)
-                {
-                    if (verti.Contains(vertice))
-                    {
-                        Debug.Log(vertice);
-                    }
-                    verti.Add(vertice);
-                    Paintmeshv2(vertice, hex.indextype);
-
-                }
             }
         }
-        
+
+
 
 
     }
-    private void Paintmeshv1(Vertice n, int typeNumber)
+
+    private void Paintmesh(Vertice n, int typeNumber)
     {
         int index = n.x + n.z * HorizontalPointsCount;
+        float mainweight = 0.3f;
+        float neighbourweight = (1 - mainweight) / connections[index].Connection.Count;
         if (typeNumber <= 2)
         {
-            fieldMesh.texturetypes2[index] = texturscodes[typeNumber];
+            fieldMesh.texturetypes2[index] += texturscodes[typeNumber] * mainweight;
         }
         else
         {
-            fieldMesh.texturetypes3[index] = texturscodes[typeNumber - 3];
+            fieldMesh.texturetypes3[index] += texturscodes[typeNumber - 3] * mainweight;
         }
-    }
-    private void Paintmeshv2(Vertice n, int typeNumber)
-    {
-        int index = n.x + n.z * HorizontalPointsCount;
-        
-        if (fieldMesh.texturetypes2[index] == new Vector3(0,0,0) && fieldMesh.texturetypes3[index] == new Vector3(0, 0, 0))
+        foreach (int neighbourindex in connections[index].Connection)
         {
-            if (typeNumber <= 2)
+            Hex neighbourhex = verticehex[vertices[neighbourindex]];
+            if (neighbourhex.typeindex <= 2)
             {
-                fieldMesh.texturetypes2[index] = texturscodes[typeNumber];
+                fieldMesh.texturetypes2[index] += texturscodes[neighbourhex.typeindex] * neighbourweight;
             }
             else
             {
-                fieldMesh.texturetypes3[index] = texturscodes[typeNumber - 3];
+                fieldMesh.texturetypes3[index] += texturscodes[neighbourhex.typeindex - 3] * neighbourweight;
             }
         }
-        else
-        {
-            fieldMesh.texturetypes2[index] = fieldMesh.texturetypes2[index] / 2;
-            fieldMesh.texturetypes3[index] = fieldMesh.texturetypes3[index] / 2;
-            if (typeNumber <= 2)
-            {
-                fieldMesh.texturetypes2[index] += texturscodes[typeNumber]/2;
-            }
-            else
-            {
-                fieldMesh.texturetypes3[index] += texturscodes[typeNumber - 3]/2;
-            }
-        }
-        //blending in else
-       
+        //blend with neighbours
+
+        //if (fieldMesh.texturetypes2[index] == new Vector3(0,0,0) && fieldMesh.texturetypes3[index] == new Vector3(0, 0, 0))
+        //{
+        //    if (typeNumber <= 2)
+        //    {
+        //        fieldMesh.texturetypes2[index] = texturscodes[typeNumber];
+        //    }
+        //    else
+        //    {
+        //        fieldMesh.texturetypes3[index] = texturscodes[typeNumber - 3];
+        //    }
+        //}
+        //else
+        //{
+
+        //    fieldMesh.texturetypes2[index] = fieldMesh.texturetypes2[index] / 2;
+        //    fieldMesh.texturetypes3[index] = fieldMesh.texturetypes3[index] / 2;
+        //    if (typeNumber <= 2)
+        //    {
+        //        fieldMesh.texturetypes2[index] += texturscodes[typeNumber]/2;
+        //    }
+        //    else
+        //    {
+        //        fieldMesh.texturetypes3[index] += texturscodes[typeNumber - 3]/2;
+        //    }
+        //}
+        ////blending in else
+
 
     }
     private Dictionary<int, VertexConnection> CreateConnections()
     {
-         return  VertexConnection.BuildNetwork(_triangles);
+        return VertexConnection.BuildNetwork(_triangles);
     }
     private void SmoothMesh()
     {
@@ -371,34 +396,66 @@ public class FieldGenerator : MonoBehaviour
         for (int loop = 0; loop < smoothlevel; loop++)
         {
             for (int i = 0; i < vertices.Count; i++)
-            {
-
-                int a = 0;
-                Startoffor:
-                int connectTo = UnityEngine.Random.Range(0, connections[i].Connection.Count);
-
-                if (verticehex.ContainsKey(vertices[connections[i].Connection[connectTo]]))
-                {
-                    verticehex[vertices[i]] = verticehex[vertices[connections[i].Connection[connectTo]]];
-                    if (verticehex.ContainsKey(vertices[i]))
-                    {
-                        verticehex[vertices[i]].vertcies.Remove(vertices[i]);
-
-
-                    }
-                    else verticehex.Add(vertices[i], verticehex[vertices[connections[i].Connection[connectTo]]]);
-                    verticehex[vertices[connections[i].Connection[connectTo]]].vertcies.Add(vertices[i]);
-                }
-                else if (a < 5)
-                {
-                    a++;
-                    goto Startoffor;
-                }
-
+            {  
+                
+                SmoothMesh(i,true);
+               
 
             }
+
         }
-        for(int loop=0; loop < secondsmoothlevel; loop++)
+        while (verticehex.Keys.Count != vertices.Count)
+        {
+            for (int i = 0; i < vertices.Count; i++)
+            {
+                if (!verticehex.ContainsKey(vertices[i]))
+                {
+                    SmoothMesh(i,false);
+                }
+            }
+        }
+        AfterSmooth();
+
+
+
+
+    }
+    private void SmoothMesh(int i, bool random)
+    {
+        
+        int a = 0;
+        Startoffor:
+        int connectTo = UnityEngine.Random.Range(0, connections[i].Connection.Count);
+
+        int distance = verticehex[vertices[connectTo]].center.DiscreteDistance(vertices[i]);
+        
+       // if (distance > 8 && random)
+         //   return;
+        if (distance <= 6 || UnityEngine.Random.Range(0, distance-4 ) <3 || !random )
+        {
+            if (verticehex.ContainsKey(vertices[connections[i].Connection[connectTo]]))
+            {
+
+                if (verticehex.ContainsKey(vertices[i]))
+                {
+                    verticehex[vertices[i]].vertcies.Remove(vertices[i]);
+
+
+                }
+
+                verticehex[vertices[connections[i].Connection[connectTo]]].vertcies.Add(vertices[i]);
+                verticehex[vertices[i]] = verticehex[vertices[connections[i].Connection[connectTo]]];
+            }
+            else if (a < 5)
+            {
+                a++;
+                goto Startoffor;
+            }
+        }
+    }
+    private void AfterSmooth()
+    {
+        for (int loop = 0; loop < secondsmoothlevel; loop++)
         {
             for (int i = 0; i < vertices.Count; i++)
             {
@@ -417,25 +474,26 @@ public class FieldGenerator : MonoBehaviour
                 }
                 foreach (HexType hex in coincidence.Keys)
                 {
-                    if (!coincidence.ContainsKey(verticehex[vertices[i]].type)|| coincidence[verticehex[vertices[i]].type] <= needsametostay)
+                    if (!coincidence.ContainsKey(verticehex[vertices[i]].type) || coincidence[verticehex[vertices[i]].type] <= needsametostay)
                     {
-                        HexType supremacytype=HexType.plain;
+                        HexType supremacytype = HexType.plain;
                         int supremacyquantity = 0;
-                        foreach(HexType typ in coincidence.Keys)
+                        foreach (HexType typ in coincidence.Keys)
                         {
                             if (coincidence[typ] > supremacyquantity)
                             {
                                 supremacytype = typ;
                                 supremacyquantity = coincidence[typ];
                             }
-                           
+
                         }
                         for (int a = 0; a < connections[i].Connection.Count; a++)
                         {
                             if (verticehex[vertices[connections[i].Connection[a]]].type == supremacytype)
                             {
-                                verticehex[vertices[i]] = verticehex[vertices[connections[i].Connection[a]]];
+
                                 verticehex[vertices[i]].vertcies.Remove(vertices[i]);
+                                verticehex[vertices[i]] = verticehex[vertices[connections[i].Connection[a]]];
                                 verticehex[vertices[connections[i].Connection[a]]].vertcies.Add(vertices[i]);
                                 break;
                             }
@@ -444,58 +502,11 @@ public class FieldGenerator : MonoBehaviour
                     }
                 }
             }
-        
         }
-    }
+        }
     private void Setheigh()
     {
-        //var hexCenters = vertices.Where(v => v.IsHexCenter());
-        //foreach (var hexCenter in hexCenters)
-        //{
-
-
-        //    var hexCoords = hexCenter.ToHexCoordinates();
-        //    var height = verticehex[hexCenter].type switch
-
-        //    {
-        //        HexType.plain => 0f,
-        //        HexType.hill => hillHeight,
-        //        HexType.rock => rockHeight,
-        //        HexType.swamp => swampHeight,
-        //        _ => throw new ArgumentException("wrong hex type")
-        //    };
-        //    vertices[hexCenter.x + hexCenter.z * HorizontalPointsCount].position.y = height;
-        //}
-        //foreach (Vertice vert in vertices)
-        //{
-        //    Hex hex = verticehex[vert];
-        //    if(vert != hex.center)
-        //    {
-        //        float newHeight;
-
-
-
-        //        newHeight = hex.type switch
-        //        {
-        //            HexType.plain => 0f,
-        //            HexType.hill => HillHeight(hex.center, vert),
-        //            HexType.rock => RockHeight(hex.center, vert),
-        //            HexType.swamp => SwampHeight(hex.center, vert),
-        //            _ => throw new ArgumentException("wrong hex type")
-        //        };
-
-
-
-        //        vertices[vert.x + vert.z * HorizontalPointsCount].position.y = newHeight;
-
-        //    }
-        //    else
-        //    {
-
-
-        //    }
-
-        //    }
+       
         foreach (Hex hex in hexlist)
         {
             var height = hex.type switch
@@ -505,6 +516,7 @@ public class FieldGenerator : MonoBehaviour
                 HexType.hill => hillHeight,
                 HexType.rock => rockHeight,
                 HexType.swamp => swampHeight,
+                HexType.forest => 0f,
                 _ => throw new ArgumentException("wrong hex type")
             };
             vertices.First(v => v.tX == hex.center.tX && v.tZ == hex.center.tZ).position.y = height;
@@ -521,6 +533,7 @@ public class FieldGenerator : MonoBehaviour
                         HexType.hill => HillHeight(hex.center, n),
                         HexType.rock => RockHeight(hex.center, n),
                         HexType.swamp => SwampHeight(hex.center, n),
+                        HexType.forest =>0f,
                         _ => throw new ArgumentException("wrong hex type")
                     };
 
@@ -661,17 +674,18 @@ public class Hex
     public Vertice center;
     public HexType type;
     public List<Vertice> vertcies = new List<Vertice>();
-    public int indextype;
+    public int typeindex;
     public Hex(Vertice hexcenter, HexType hextype)
     {
         center = hexcenter;
         type = hextype;
-        indextype = type switch
+        typeindex = type switch
         {
             HexType.plain => 0,
             HexType.hill => 1,
             HexType.rock => 2,
             HexType.swamp => 3,
+            HexType.forest => 4,
             _ => throw new ArgumentException("wrong hex type")
         };
     }
@@ -756,13 +770,14 @@ public class Vertice
     }
 
 
-
+    
+    
 }
 
 
 public enum HexType
 {
-    plain, hill, rock, swamp
+    plain, hill, rock, swamp, forest
 }
 
 //public interface IHexHeightsProvider {
