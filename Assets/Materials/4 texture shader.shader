@@ -3,7 +3,8 @@ Shader "Custom/4 texture shader"
     Properties
     {
         _Color ("Color", Color) = (1,1,1,1)
-        _MainTex ("Albedo (RGB)", 2D) = "white" {}
+        _Grid ("grid map", 2D) = "white" {}
+        _BumpMap("Bumpmap", 2D) = "bump" {}
         _Scale("Scale", Range(0,1.5))=0.5
         
         [NoScaleOffset] _Texture1("Texture 1", 2D) = "white" {}
@@ -28,7 +29,8 @@ Shader "Custom/4 texture shader"
        
         #pragma target 3.0
 
-        sampler2D _MainTex;
+        sampler2D _Grid;
+        sampler2D _BumpMap;
         sampler2D _Texture1, _Texture2, _Texture3, _Texture4, _Texture5, _Texture6;
         half _Glossiness;
         half _Metallic;
@@ -41,6 +43,7 @@ Shader "Custom/4 texture shader"
             float3 worldPos;
             float3 terrain;
             float3 terrain2;
+            float2 uv_BumpMap;
         };
 
         void vert(inout appdata_full v, out Input data) {
@@ -67,8 +70,13 @@ Shader "Custom/4 texture shader"
                 tex2D(_Texture4, IN.worldPos.xz * _Scale) * IN.terrain2.x  +
                 tex2D(_Texture5, IN.worldPos.xz * _Scale) * IN.terrain2.y +
                 tex2D(_Texture6, IN.worldPos.xz * _Scale) * IN.terrain2.z ;
-          
-            o.Albedo = c.rgb;
+            float2 gridUV = IN.worldPos.xz;
+            gridUV.x *= 1 / (4 * 8.66025404);
+            gridUV.y *= 1 / (2 * 15.0); 
+            fixed4 grid = tex2D(_Grid, IN.worldPos.xz );
+           
+            o.Albedo = c.rgb*IN.color;
+            o.Normal = UnpackNormal(tex2D(_BumpMap, IN.uv_BumpMap));
             o.Metallic = _Metallic;
             o.Smoothness = _Glossiness;
             o.Alpha = c.a;

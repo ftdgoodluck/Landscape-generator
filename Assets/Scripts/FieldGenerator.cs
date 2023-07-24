@@ -26,7 +26,7 @@ public class FieldGenerator : MonoBehaviour
     public int typequantity = 5;
     public List<float> biomsweights = new List<float>();
     public int smoothlevel = 2;
-    
+
     public int secondsmoothlevel = 2;
     public int needsametostay = 2;
     public FieldMesh fieldMesh;
@@ -34,7 +34,7 @@ public class FieldGenerator : MonoBehaviour
     private List<Vertice> vertices = new List<Vertice>();
     private List<Vector2> uvs = new List<Vector2>();
 
-    private List<Color> colors = new List<Color>();
+    private Color[] colors;
     private List<Vector3> texturscodes = new List<Vector3>();
     private Dictionary<Vertice, Hex> verticehex = new Dictionary<Vertice, Hex>();
     private List<Hex> hexlist = new List<Hex>();
@@ -43,17 +43,12 @@ public class FieldGenerator : MonoBehaviour
     private void Start()
     {
 
-        //colors.Add(Color.red);
-        //colors.Add(Color.green);
-        //colors.Add(Color.blue);
-        //colors.Add(Color.black);
-        //colors.Add(Color.white);
+
         texturscodes.Add(new Vector3(1, 0, 0));
         texturscodes.Add(new Vector3(0, 1, 0));
         texturscodes.Add(new Vector3(0, 0, 1));
         _triangles = new List<int>();
-        foreach (int i in _triangles)
-            Debug.Log(i);
+        colors = new Color[HorizontalPointsCount * (VerticalPointsCount - 1)];
         fieldMesh.Clear();
         //GenerateHexMap();
         GenerateRandomHexMap();
@@ -62,6 +57,7 @@ public class FieldGenerator : MonoBehaviour
         //AddUVs();
         connections = CreateConnections();
         UpdateHeights();
+        SetGrid();
         SmoothMesh();
         Setheigh();
         NormalizeEdgesHeights();
@@ -69,29 +65,7 @@ public class FieldGenerator : MonoBehaviour
         Paintmesh();
         PopulateMeshVertices();
         PopulateTriangles();
-        foreach (Hex hex in hexlist)
-        {
-            foreach (Hex hex2 in hexlist)
-            {
-                if (hex != hex2)
-                {
-                    foreach (Vertice vertice in hex.vertcies)
-                    {
-                        foreach (Vertice vertice2 in hex2.vertcies)
-                        {
-                            if (vertice == vertice2)
-                            {
-                                Debug.Log(hex.center.position);
-                                Debug.Log(hex2.center.position);
-                                Debug.Log(vertice.position);
-                                Debug.Log(vertice2.position);
-                            }
-                        }
-                    }
-                }
-
-            }
-        }
+        SetColors();
 
 
         fieldMesh.Apply();
@@ -104,7 +78,7 @@ public class FieldGenerator : MonoBehaviour
         {
             for (int x = 0; x < HorizontalPointsCount; x++)
             {
-                //Color asd = new Vector4(1, 1, 1,1);
+
                 Vector3 position;
                 position.x = z % 2 == 0 ? x * triangleSize : x * triangleSize + triangleSize / 2;
                 position.z = z * triangleSize * 0.86602540378f;
@@ -112,7 +86,7 @@ public class FieldGenerator : MonoBehaviour
                 vertices.Add(new Vertice(position, x, z));
 
 
-
+                colors[z * HorizontalPointsCount + x] = Color.white;
                 fieldMesh.texturetypes2.Add(new Vector3(0, 0, 0));
                 fieldMesh.texturetypes3.Add(new Vector3(0, 0, 0));
 
@@ -125,6 +99,17 @@ public class FieldGenerator : MonoBehaviour
             }
         }
     }
+    private void SetGrid()
+    {
+        foreach (Hex hex in hexlist)
+        {
+            foreach (Vertice vertice in vertices)
+            {
+                if (vertice.DiscreteDistance(hex.center) == 6)
+                    colors[vertice.z * HorizontalPointsCount + vertice.x] = Color.black;
+            }
+        }
+    }
 
     private void PopulateMeshVertices()
     {
@@ -133,11 +118,12 @@ public class FieldGenerator : MonoBehaviour
             fieldMesh.AddVertice(v.position);
         }
     }
+    private void SetColors()
+    {
+        fieldMesh.SetColors(colors);
+    }
 
-    //private void AddUVs()
-    //{
-    //    fieldMesh.AddUVs(uvs);
-    //}
+
 
     private void GenerateRandomHexMap()
     {
@@ -679,15 +665,9 @@ public class Hex
     {
         center = hexcenter;
         type = hextype;
-        typeindex = type switch
-        {
-            HexType.plain => 0,
-            HexType.hill => 1,
-            HexType.rock => 2,
-            HexType.swamp => 3,
-            HexType.forest => 4,
-            _ => throw new ArgumentException("wrong hex type")
-        };
+
+        typeindex = Convert.ToInt16(type);
+        
     }
    
 }

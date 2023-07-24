@@ -177,9 +177,9 @@ MonoBehaviour:
   step: 0.1
   typequantity: 5
   biomsweights:
-  - 40
   - 20
-  - 7
+  - 20
+  - 20
   - 20
   - 20
   smoothlevel: 5
